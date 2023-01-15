@@ -1,8 +1,7 @@
 import {createWebSocketStream, WebSocketServer} from 'ws'
 
 import {httpServer} from './src/http_server'
-import {getMouseActionMessage} from './src/commands/mouseNavigate'
-import {drawFigure} from './src/commands/drawFigure'
+import {getMouseActionMessage, drawFigure, makeScreenshot} from './src/commands'
 
 const HTTP_PORT = 8181
 
@@ -16,23 +15,23 @@ wss.on('connection', (ws) => {
 
   duplex.on('data', async (chunk) => {
     try {
-      const [command, px1, px2] = (`${chunk}`).split(' ')
+      const [command, value1, value2] = (`${chunk}`).split(' ')
       console.log(`Received: ${chunk}`)
       const [select, action] = command.split('_')
 
       switch (select) {
         case 'mouse':
-          const message = await getMouseActionMessage(action, px1)
+          const message = await getMouseActionMessage(action, value1)
           duplex.write(message ? `${command} ${message}` : command, 'utf-8')
           break
 
         case 'draw':
-          drawFigure(action, px1, px2)
+          drawFigure(action, value1, value2)
           duplex.write(command)
           break
 
         case 'prnt':
-          duplex.write(command)
+          await makeScreenshot(command, duplex)
           break
       }
     } catch (err) {
@@ -41,9 +40,11 @@ wss.on('connection', (ws) => {
   })
 
   ws.on('close', () => {
-    process.stdout.write('\nClosing websocket...\n')
-    ws.close()
-    wss.close()
-    process.exit()
+    process.stdout.write('\nWebsocket closed\n')
+    // process.exit();
   })
 })
+
+process.on('SIGINT', () => {
+  console.log('Out')
+});
