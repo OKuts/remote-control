@@ -13,6 +13,8 @@ const wss = new WebSocketServer({port: 8080})
 wss.on('connection', (ws) => {
   const duplex = createWebSocketStream(ws, {encoding: 'utf8', decodeStrings: false})
 
+  console.log('Client connected.')
+
   duplex.on('data', async (chunk) => {
     try {
       const [command, value1, value2] = (`${chunk}`).split(' ')
@@ -31,7 +33,7 @@ wss.on('connection', (ws) => {
           break
 
         case 'prnt':
-          await makeScreenshot(command, duplex)
+          makeScreenshot(command, duplex)
           break
       }
     } catch (err) {
@@ -41,10 +43,11 @@ wss.on('connection', (ws) => {
 
   ws.on('close', () => {
     process.stdout.write('\nWebsocket closed\n')
-    // process.exit();
   })
-})
 
+})
 process.on('SIGINT', () => {
-  console.log('Out')
-});
+  console.log('WebSocketServer stopped...')
+  wss.close()
+  process.exit()
+})
