@@ -9,10 +9,11 @@ console.log(`Start static http server on the ${HTTP_PORT} port!`)
 httpServer.listen(HTTP_PORT)
 
 const wss = new WebSocketServer({port: 8080})
+console.log('wss.address: ', wss.address())
+
 
 wss.on('connection', (ws) => {
   const duplex = createWebSocketStream(ws, {encoding: 'utf8', decodeStrings: false})
-
   console.log('Client connected.')
 
   duplex.on('data', async (chunk) => {
@@ -42,7 +43,7 @@ wss.on('connection', (ws) => {
   })
 
   ws.on('close', () => {
-    process.stdout.write('\nWebsocket closed\n')
+    process.stdout.write('\nClient disconnected\n')
   })
 
 })
